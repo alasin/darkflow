@@ -41,6 +41,14 @@ def postprocess(self, net_out, im, save = True):
 	h, w, _ = imgcv.shape
 	
 	resultsForJSON = []
+	max_confidence = -1
+	max_left = -1
+	max_right = -1
+	max_top = -1
+	max_bot = -1
+	max_mess = -1
+	max_thick = -1
+	max_max_indx = -1
 	for b in boxes:
 		boxResults = self.process_box(b, h, w, threshold)
 		if boxResults is None:
@@ -51,11 +59,17 @@ def postprocess(self, net_out, im, save = True):
 			resultsForJSON.append({"label": mess, "confidence": float('%.2f' % confidence), "topleft": {"x": left, "y": top}, "bottomright": {"x": right, "y": bot}})
 			continue
 
+		if confidence > max_confidence:
+			max_left, max_right, max_top, max_bot, max_mess, max_max_indx, max_confidence = boxResults
+			max_thick = int((h + w) // 300)
+	
+	# print(max_left, max_right, max_top, max_bot, max_mess, max_max_indx, max_confidence)
+	if max_confidence != -1:
 		cv2.rectangle(imgcv,
-			(left, top), (right, bot),
-			colors[max_indx], thick)
-		cv2.putText(imgcv, mess, (left, top - 12),
-			0, 1e-3 * h, colors[max_indx],thick//3)
+			(max_left, max_top), (max_right, max_bot),
+			colors[max_max_indx], max_thick)
+		cv2.putText(imgcv, max_mess, (max_left, max_top - 12),
+			0, 1e-3 * h, colors[max_max_indx],max_thick//3)
 
 	if not save: return imgcv
 
